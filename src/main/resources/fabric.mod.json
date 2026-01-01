@@ -1,31 +1,30 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "macrotrigger",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "MacroTrigger",
+	"description": "A Fabric mod that ports and recreates the trigger-based macro system from the 1.12.2 LiteLoader Macro Key Bind Mod",
 	"authors": [
 		"Me!"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/JesusMRS05/MacroTriggerFabric"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/macrotrigger/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"com.github.jesusmrs05.MacroTrigger"
 		],
 		"client": [
-			"com.example.ExampleModClient"
+			"com.github.jesusmrs05.MacroTriggerClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+		"macrotrigger.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "macrotrigger.client.mixins.json",
 			"environment": "client"
 		}
 	],
