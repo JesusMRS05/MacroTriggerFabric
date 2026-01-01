@@ -5,7 +5,7 @@
 	"name": "MacroTrigger",
 	"description": "A Fabric mod that ports and recreates the trigger-based macro system from the 1.12.2 LiteLoader Macro Key Bind Mod",
 	"authors": [
-		"Me!"
+		"JesusMRS05"
 	],
 	"contact": {
 		"sources": "https://github.com/JesusMRS05/MacroTriggerFabric"
