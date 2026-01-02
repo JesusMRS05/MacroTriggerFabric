@@ -1,5 +1,6 @@
 package com.github.jesusmrs05.macrotrigger.config;
 
+import com.github.jesusmrs05.macrotrigger.util.Macro;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,6 +30,16 @@ public final class ConfigManager {
         if (Files.exists(CONFIG_PATH)) {
             try {
                 config = GSON.fromJson(Files.readString(CONFIG_PATH), Config.class);
+
+                // 🔴 NORMALIZE AFTER LOAD
+                if (config.macros != null) {
+                    for (Macro macro : config.macros) {
+                        if (macro != null) {
+                            macro.normalize();
+                        }
+                    }
+                }
+
             } catch (IOException e) {
                 config = new Config();
             }

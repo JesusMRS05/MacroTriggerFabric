@@ -1,5 +1,7 @@
 package com.github.jesusmrs05.macrotrigger.util;
 
+import java.util.function.Predicate;
+
 public class FormalizedConditon {
     private MacroTarget macroTarget;
     private String targetValue;
@@ -35,4 +37,7 @@ public class FormalizedConditon {
     public void setTargetValue(String value) { this.targetValue = value; }
     public void setNegate(boolean negate) { this.negate = negate; }
     public boolean isNegate() { return this.negate; }
+    public Predicate<String> getPredicate() {
+        return dummy -> this.condition.test(this.macroTarget.getTargetValue(), this.targetValue);
+    }
 }

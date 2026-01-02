@@ -1,6 +1,7 @@
 package com.github.jesusmrs05.macrotrigger.util;
 
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 public enum MacroCondition {
     LESSER_THAN((value, targetValue) ->
