@@ -19,6 +19,9 @@
 		],
 		"client": [
 			"com.github.jesusmrs05.MacroTriggerClient"
+		],
+		"modmenu": [
+			"com.github.jesusmrs05.macrotrigger.compat.ModMenuCompat"
 		]
 	},
 	"mixins": [
