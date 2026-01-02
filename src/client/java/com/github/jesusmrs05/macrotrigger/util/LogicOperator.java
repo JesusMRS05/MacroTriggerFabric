@@ -24,30 +24,38 @@ public enum LogicOperator {
             List<FormalizedConditon> predicates,
             List<LogicOperator> operators
     ) {
+        if (predicates.isEmpty()) {
+            return () -> false;
+        }
 
-        if (predicates.size() != operators.size() + 1) {
+        if (operators.size() != predicates.size()) {
             throw new IllegalArgumentException(
-                    "predicates must have size operators + 1"
+                    "operators must have the same size as predicates (first operator must be null)"
             );
         }
 
-        BooleanSupplier result = () -> predicates.getFirst()
-                .getPredicate()
-                .test(null);
+        // Start with first predicate
+        BooleanSupplier result = () ->
+                predicates.get(0).getPredicate().test(null);
 
-        for (int i = 0; i < operators.size(); i++) {
-            int finalI = i;
-            BooleanSupplier next = () -> predicates.get(finalI + 1)
-                    .getPredicate()
-                    .test(null);
+        // Combine from index 1 onwards
+        for (int i = 1; i < predicates.size(); i++) {
 
             LogicOperator op = operators.get(i);
+            if (op == null) {
+                throw new IllegalStateException(
+                        "Operator at index " + i + " is null (only index 0 may be null)"
+                );
+            }
 
-            BooleanSupplier left = result; // effectively final
+            BooleanSupplier left = result;
+            int finalI = i;
+            BooleanSupplier right = () ->
+                    predicates.get(finalI).getPredicate().test(null);
 
             result = () -> op.operator.test(
                     left.getAsBoolean(),
-                    next.getAsBoolean()
+                    right.getAsBoolean()
             );
         }
 

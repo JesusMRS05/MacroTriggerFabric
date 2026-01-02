@@ -22,7 +22,7 @@ public class MacroFactory {
         List<LogicOperator> operators = new ArrayList<>();
         operators.add(null); // 👈 permitido en ArrayList
 
-        return new Macro(actions, conditions, operators);
+        return new Macro("New Macro", actions, conditions, operators);
     }
 
 }

@@ -16,6 +16,9 @@ public class ConfigScreen extends Screen {
     private static final int FOOTER_HEIGHT = 60;
     private static final int TOP_MARGIN = 10;
 
+    // 🔥 NUEVO: espacio vertical entre macros
+    private static final int MACRO_SPACING = 50;
+
     private final Screen parent;
     private final Config config;
 
@@ -60,7 +63,9 @@ public class ConfigScreen extends Screen {
                     this::rebuildWidgets
             );
             panels.add(panel);
-            contentHeight += panel.getHeight() + 20;
+
+            // 🔥 altura del panel + separación visual
+            contentHeight += panel.getHeight() + MACRO_SPACING;
         }
 
         // ---- Add only visible widgets (clipped scroll area) ----

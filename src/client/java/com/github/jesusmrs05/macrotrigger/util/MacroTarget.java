@@ -1,30 +1,37 @@
 package com.github.jesusmrs05.macrotrigger.util;
 
+import com.github.jesusmrs05.macrotrigger.client.ChatState;
+import net.minecraft.client.Minecraft;
+
 import java.util.List;
 import java.util.function.Supplier;
 
 public enum MacroTarget {
-    HEALTH(MacroCondition.NUMERIC_CONDITIONS,
+    HEALTH(
+            MacroCondition.NUMERIC_CONDITIONS,
             new MacroTargetValueType[]{MacroTargetValueType.INTEGER},
             () -> {
-                //TODO: return current health level
-                return null;
-            }),
+                Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.player == null) return 0;
+                return (int) mc.player.getHealth();
+            }
+    ),
 
-    HUNGER(MacroCondition.NUMERIC_CONDITIONS,
+    HUNGER(
+            MacroCondition.NUMERIC_CONDITIONS,
             new MacroTargetValueType[]{MacroTargetValueType.INTEGER},
             () -> {
-                //TODO: return current hunger level
-                return null;
-            }),
+                Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.player == null) return 0;
+                return mc.player.getFoodData().getFoodLevel();
+            }
+    ),
 
     CHAT(
             MacroCondition.TEXT_CONDITIONS,
             new MacroTargetValueType[]{MacroTargetValueType.ANYTHING},
-            () -> {
-                //TODO: return the last message sent to chat
-                return null;
-            });
+            ChatState::getLastMessage
+    );
 
     private MacroCondition[] conditions;
     private MacroTargetValueType[] admittedValueTypes;
@@ -62,5 +69,11 @@ public enum MacroTarget {
 
     public MacroCondition[] getConditions() {
         return this.conditions;
+    }
+
+    private static String lastChatMessage = "";
+
+    public static void setLastChatMessage(String msg) {
+        lastChatMessage = msg;
     }
 }
