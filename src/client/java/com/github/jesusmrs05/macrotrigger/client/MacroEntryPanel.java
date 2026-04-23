@@ -25,6 +25,7 @@ public class MacroEntryPanel {
     private static final int ROW_GAP = 3;
     private static final int SECTION_GAP = 8;
     private static final int LABEL_HEIGHT = 12;
+    private static final int BOTTOM_PADDING = 6;
 
     private final Macro macro;
     private final int baseX;
@@ -58,19 +59,28 @@ public class MacroEntryPanel {
     }
 
     public int getHeight() {
-        int conditionRows = Math.max(1, macro.getConditions().size());
-        int actionRows = Math.max(1, macro.getActions().size());
+        int height = PADDING * 2;
 
-        return (PADDING * 2)
-                + ROW_HEIGHT
-                + SECTION_GAP
-                + LABEL_HEIGHT
-                + conditionRows * ((ROW_HEIGHT * 2) + ROW_GAP)
-                + ROW_HEIGHT
-                + SECTION_GAP
-                + LABEL_HEIGHT
-                + actionRows * (ROW_HEIGHT + ROW_GAP)
-                + ROW_HEIGHT;
+        height += ROW_HEIGHT;
+        height += SECTION_GAP + LABEL_HEIGHT;
+
+        if (macro.getConditions().isEmpty()) {
+            height += ROW_HEIGHT;
+        } else {
+            height += macro.getConditions().size() * ((ROW_HEIGHT * 2) + (ROW_GAP * 2));
+        }
+
+        height += 8;
+        height += ROW_HEIGHT;
+        height += SECTION_GAP + LABEL_HEIGHT;
+
+        if (macro.getActions().isEmpty()) {
+            height += ROW_HEIGHT;
+        } else {
+            height += macro.getActions().size() * (ROW_HEIGHT + ROW_GAP);
+        }
+
+        return height + BOTTOM_PADDING;
     }
 
     public List<AbstractWidget> buildWidgetsAt(int x, int y) {
