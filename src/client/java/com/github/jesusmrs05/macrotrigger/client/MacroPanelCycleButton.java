@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
@@ -97,6 +98,11 @@ public class MacroPanelCycleButton<T> extends AbstractWidget {
     @Override
     protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         this.defaultButtonNarrationText(narrationElementOutput);
+    }
+
+    @Override
+    protected boolean isValidClickButton(MouseButtonInfo mouseButtonInfo) {
+        return mouseButtonInfo.button() == 0 || mouseButtonInfo.button() == 1;
     }
 
     private void cycle(int step) {
