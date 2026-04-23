@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class ConfigScreen extends Screen {
     private static final int PANEL_SPACING = 10;
     private static final int BAR_INSET = 6;
     private static final int BODY_INSET = 4;
+    private static final Identifier DIRT_TEXTURE = Identifier.withDefaultNamespace("textures/block/coarse_dirt.png");
 
     private final Screen parent;
     private final Config config;
@@ -131,8 +133,8 @@ public class ConfigScreen extends Screen {
         int visibleTop = bodyTop + BODY_INSET;
         int visibleBottom = bodyBottom - BODY_INSET;
 
-        this.renderMenuBackground(guiGraphics, contentLeft, headerTop, contentRight, headerBottom);
-        this.renderMenuBackground(guiGraphics, contentLeft, footerTop, contentRight, footerBottom);
+        renderDirtBand(guiGraphics, contentLeft, headerTop, contentRight, headerBottom);
+        renderDirtBand(guiGraphics, contentLeft, footerTop, contentRight, footerBottom);
         guiGraphics.fill(contentLeft, bodyTop, contentRight, bodyBottom, 0x66101010);
 
         guiGraphics.hLine(contentLeft, contentRight - 1, headerTop, 0xFF474747);
@@ -220,5 +222,19 @@ public class ConfigScreen extends Screen {
                 && mouseX < contentRight
                 && mouseY >= visibleTop
                 && mouseY < visibleBottom;
+    }
+
+    private void renderDirtBand(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+        Screen.renderMenuBackgroundTexture(
+                guiGraphics,
+                DIRT_TEXTURE,
+                left,
+                top,
+                0.0F,
+                0.0F,
+                right - left,
+                bottom - top
+        );
+        guiGraphics.fill(left, top, right, bottom, 0x66101010);
     }
 }
