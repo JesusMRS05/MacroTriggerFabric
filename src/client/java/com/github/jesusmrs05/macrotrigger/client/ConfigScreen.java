@@ -133,16 +133,12 @@ public class ConfigScreen extends Screen {
         int visibleTop = bodyTop + BODY_INSET;
         int visibleBottom = bodyBottom - BODY_INSET;
 
-        renderDirtBand(guiGraphics, contentLeft, headerTop, contentRight, headerBottom);
-        renderDirtBand(guiGraphics, contentLeft, footerTop, contentRight, footerBottom);
+        renderDirtBand(guiGraphics, 0, 0, this.width, headerBottom);
+        renderDirtBand(guiGraphics, 0, footerTop, this.width, this.height);
         guiGraphics.fill(contentLeft, bodyTop, contentRight, bodyBottom, 0x66101010);
 
-        guiGraphics.hLine(contentLeft, contentRight - 1, headerTop, 0xFF474747);
-        guiGraphics.hLine(contentLeft, contentRight - 1, headerBottom, 0xFF3A3A3A);
-        guiGraphics.hLine(contentLeft, contentRight - 1, footerTop, 0xFF3A3A3A);
-        guiGraphics.hLine(contentLeft, contentRight - 1, footerBottom, 0xFF2E2E2E);
-        guiGraphics.vLine(contentLeft, headerTop, footerBottom, 0xFF2E2E2E);
-        guiGraphics.vLine(contentRight - 1, headerTop, footerBottom, 0xFF2E2E2E);
+        guiGraphics.hLine(0, this.width - 1, headerBottom, 0xFF3A3A3A);
+        guiGraphics.hLine(0, this.width - 1, footerTop, 0xFF3A3A3A);
 
         guiGraphics.drawString(this.font, this.title, contentLeft + BAR_INSET, headerTop + 7, 0xFFFFFF, false);
         guiGraphics.drawString(

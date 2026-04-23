@@ -261,8 +261,10 @@ public class MacroEntryPanel {
         guiGraphics.fill(x, y, x + width, panelBottom, 0x66171717);
         guiGraphics.fill(x, y, x + width, y + 1, 0xFF474747);
         guiGraphics.fill(x, panelBottom - 1, x + width, panelBottom, 0xFF2A2A2A);
-        guiGraphics.fill(x, y, x + 1, panelBottom, 0xFF2E2E2E);
-        guiGraphics.fill(x + width - 1, y, x + width, panelBottom, 0xFF2E2E2E);
+        guiGraphics.fill(x, y, x + 1, panelBottom, 0xFF6A6A6A);
+        guiGraphics.fill(x + 1, y, x + 2, panelBottom, 0xFF2A2A2A);
+        guiGraphics.fill(x + width - 2, y, x + width - 1, panelBottom, 0xFF2A2A2A);
+        guiGraphics.fill(x + width - 1, y, x + width, panelBottom, 0xFF6A6A6A);
 
         int textX = x + PADDING;
         int textY = y + PADDING + ROW_HEIGHT + 3;
