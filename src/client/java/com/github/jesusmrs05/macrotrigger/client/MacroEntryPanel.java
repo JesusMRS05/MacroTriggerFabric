@@ -1,8 +1,19 @@
 package com.github.jesusmrs05.macrotrigger.client;
 
-import com.github.jesusmrs05.macrotrigger.util.*;
+import com.github.jesusmrs05.macrotrigger.util.FormalizedAction;
+import com.github.jesusmrs05.macrotrigger.util.FormalizedConditon;
+import com.github.jesusmrs05.macrotrigger.util.LogicOperator;
+import com.github.jesusmrs05.macrotrigger.util.Macro;
+import com.github.jesusmrs05.macrotrigger.util.MacroAction;
+import com.github.jesusmrs05.macrotrigger.util.MacroCondition;
+import com.github.jesusmrs05.macrotrigger.util.MacroTarget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -12,7 +23,9 @@ public class MacroEntryPanel {
 
     private static final int PADDING = 8;
     private static final int ROW_HEIGHT = 20;
-    private static final int ROW_GAP = 4;
+    private static final int ROW_GAP = 3;
+    private static final int SECTION_GAP = 8;
+    private static final int LABEL_HEIGHT = 12;
 
     private final Macro macro;
     private final int baseX;
@@ -37,295 +50,234 @@ public class MacroEntryPanel {
         this.onChange = onChange;
     }
 
-    public int getBaseX() { return baseX; }
-    public int getBaseY() { return baseY; }
+    public int getBaseX() {
+        return baseX;
+    }
+
+    public int getBaseY() {
+        return baseY;
+    }
 
     public int getHeight() {
         int conditionRows = Math.max(1, macro.getConditions().size());
         int actionRows = Math.max(1, macro.getActions().size());
 
-        return
-                24 +
-                        conditionRows * (ROW_HEIGHT * 2 + ROW_GAP * 2) + 28 +
-                        24 +
-                        actionRows * (ROW_HEIGHT + ROW_GAP) + 28;
+        return (PADDING * 2)
+                + ROW_HEIGHT
+                + SECTION_GAP
+                + LABEL_HEIGHT
+                + conditionRows * ((ROW_HEIGHT * 2) + ROW_GAP)
+                + ROW_HEIGHT
+                + SECTION_GAP
+                + LABEL_HEIGHT
+                + actionRows * (ROW_HEIGHT + ROW_GAP)
+                + ROW_HEIGHT;
     }
 
     public List<AbstractWidget> buildWidgetsAt(int x, int y) {
         List<AbstractWidget> widgets = new ArrayList<>();
 
-        int cx = x + PADDING;
-        int usableWidth = width - PADDING * 2;
-        int cy = y;
-
+        int left = x + PADDING;
+        int top = y + PADDING;
+        int usableWidth = width - (PADDING * 2);
         int gap = 4;
-        int trashWidth = 24;
-        int notWidth = 48;
-        int deleteMacroWidth = 140;
+        int deleteMacroWidth = 70;
+        int removeWidth = 20;
+        int compactWidth = 58;
+        int targetWidth = 112;
+        int conditionWidth = 132;
 
-        int colOp = cx;
-        int colTarget = colOp + 64 + gap;
-        int colCondition = colTarget + 120 + gap;
-        int colNot = colCondition + 140 + gap;
-        int colTrash = cx + usableWidth - trashWidth;
+        int contentY = top;
 
-        // ===== MACRO NAME (LEFT) =====
         int nameWidth = usableWidth - deleteMacroWidth - gap;
-
         EditBox nameBox = new EditBox(
                 Minecraft.getInstance().font,
-                cx,
-                cy,
+                left,
+                contentY,
                 nameWidth,
                 ROW_HEIGHT,
                 Component.literal("Macro name")
         );
         nameBox.setValue(macro.getName() == null ? "" : macro.getName());
         nameBox.setResponder(macro::setName);
-        nameBox.setTooltip(Tooltip.create(
-                Component.literal("Optional macro name (visual only)")
-        ));
+        nameBox.setTooltip(Tooltip.create(Component.literal("Name shown in the macro list")));
         widgets.add(nameBox);
 
-        // ===== DELETE MACRO (RIGHT) =====
-        Button deleteMacro = Button.builder(
-                Component.literal("🗑 Delete Macro"),
-                b -> onRemoveMacro.run()
-        ).bounds(cx + nameWidth + gap, cy, deleteMacroWidth, ROW_HEIGHT).build();
-        deleteMacro.setTooltip(Tooltip.create(
-                Component.literal("Deletes this macro entirely")
-        ));
+        Button deleteMacro = Button.builder(Component.literal("Delete"), b -> onRemoveMacro.run())
+                .bounds(left + nameWidth + gap, contentY, deleteMacroWidth, ROW_HEIGHT)
+                .build();
+        deleteMacro.setTooltip(Tooltip.create(Component.literal("Remove this macro")));
         widgets.add(deleteMacro);
 
-        cy += ROW_HEIGHT + 6;
+        contentY += ROW_HEIGHT + SECTION_GAP + LABEL_HEIGHT;
 
-        // ===== CONDITIONS HEADER =====
-        widgets.add(disabledHeader("CONDITIONS", cx, cy, usableWidth));
-        cy += ROW_HEIGHT + ROW_GAP;
+        int colOp = left;
+        int colTarget = colOp + compactWidth + gap;
+        int colCondition = colTarget + targetWidth + gap;
+        int colNot = colCondition + conditionWidth + gap;
+        int colRemove = left + usableWidth - removeWidth;
+        int valueWidth = usableWidth;
 
-        // ===== CONDITIONS =====
         for (int i = 0; i < macro.getConditions().size(); i++) {
             int index = i;
             FormalizedConditon cond = macro.getConditions().get(i);
 
-            // Operator
             if (i > 0) {
-                CycleButton<LogicOperator> opBtn =
-                        CycleButton.builder(v -> Component.literal(v.toString()),
-                                        macro.getOperators().get(i))
-                                .withValues(LogicOperator.values())
-                                .create(colOp, cy, 64, ROW_HEIGHT,
-                                        Component.literal("Op"),
-                                        (btn, val) -> {
-                                            macro.getOperators().set(index, val);
-                                            onChange.run();
-                                        });
-                opBtn.setTooltip(Tooltip.create(
-                        Component.literal("Logical operator combining this condition\nwith the previous one")
-                ));
+                CycleButton<LogicOperator> opBtn = CycleButton
+                        .builder(value -> Component.literal(value.toString()), macro.getOperators().get(i))
+                        .withValues(LogicOperator.values())
+                        .create(colOp, contentY, compactWidth, ROW_HEIGHT, Component.literal("Join"), (btn, value) -> {
+                            macro.getOperators().set(index, value);
+                            onChange.run();
+                        });
                 widgets.add(opBtn);
             } else {
-                widgets.add(disabledSpacer(colOp, cy, 64));
+                widgets.add(disabledSpacer(colOp, contentY, compactWidth));
             }
 
-            // Target
-            CycleButton<MacroTarget> targetBtn =
-                    CycleButton.builder(v -> Component.literal(v.toString()),
-                                    cond.getMacroTarget())
-                            .withValues(MacroTarget.values())
-                            .create(colTarget, cy, 120, ROW_HEIGHT,
-                                    Component.literal("Target"),
-                                    (btn, val) -> {
-                                        cond.setMacroTarget(val);
-                                        onChange.run();
-                                    });
-            targetBtn.setTooltip(Tooltip.create(
-                    Component.literal("What game value is being checked\n(e.g. Health, Hunger, Chat)")
-            ));
+            CycleButton<MacroTarget> targetBtn = CycleButton
+                    .builder(value -> Component.literal(value.toString()), cond.getMacroTarget())
+                    .withValues(MacroTarget.values())
+                    .create(colTarget, contentY, targetWidth, ROW_HEIGHT, Component.literal("Target"), (btn, value) -> {
+                        cond.setMacroTarget(value);
+                        onChange.run();
+                    });
             widgets.add(targetBtn);
 
-            // Condition
-            CycleButton<MacroCondition> condBtn =
-                    CycleButton.builder(v -> Component.literal(v.toString()),
-                                    cond.getCondition())
-                            .withValues(cond.getMacroTarget().getConditions())
-                            .create(colCondition, cy, 140, ROW_HEIGHT,
-                                    Component.literal("Condition"),
-                                    (btn, val) -> {
-                                        cond.setCondition(val);
-                                        onChange.run();
-                                    });
-            condBtn.setTooltip(Tooltip.create(
-                    Component.literal("How the target value is compared\n(e.g. Greater than, Contains text)")
-            ));
+            CycleButton<MacroCondition> condBtn = CycleButton
+                    .builder(value -> Component.literal(value.toString()), cond.getCondition())
+                    .withValues(cond.getMacroTarget().getConditions())
+                    .create(colCondition, contentY, conditionWidth, ROW_HEIGHT, Component.literal("Check"), (btn, value) -> {
+                        cond.setCondition(value);
+                        onChange.run();
+                    });
             widgets.add(condBtn);
 
-            // NOT
-            CycleButton<Boolean> notBtn =
-                    CycleButton.booleanBuilder(
-                                    Component.literal("Yes"),
-                                    Component.literal("No"),
-                                    cond.isNegate()
-                            )
-                            .create(colNot, cy, notWidth, ROW_HEIGHT,
-                                    Component.literal("Not"),
-                                    (btn, val) -> {
-                                        cond.setNegate(val);
-                                        onChange.run();
-                                    });
-            notBtn.setTooltip(Tooltip.create(
-                    Component.literal("Negates the condition result")
-            ));
+            CycleButton<Boolean> notBtn = CycleButton
+                    .booleanBuilder(Component.literal("Not"), Component.literal("Match"), cond.isNegate())
+                    .create(colNot, contentY, 72, ROW_HEIGHT, Component.literal("Mode"), (btn, value) -> {
+                        cond.setNegate(value);
+                        onChange.run();
+                    });
             widgets.add(notBtn);
 
-            // Remove condition
-            Button removeCond = Button.builder(
-                    Component.literal("🗑"),
-                    b -> {
+            Button removeCond = Button.builder(Component.literal("X"), b -> {
                         macro.removeCondition(index);
                         onChange.run();
-                    }
-            ).bounds(colTrash, cy, trashWidth, ROW_HEIGHT).build();
-            removeCond.setTooltip(Tooltip.create(
-                    Component.literal("Remove this condition")
-            ));
+                    })
+                    .bounds(colRemove, contentY, removeWidth, ROW_HEIGHT)
+                    .build();
+            removeCond.setTooltip(Tooltip.create(Component.literal("Remove condition")));
             widgets.add(removeCond);
 
-            cy += ROW_HEIGHT + ROW_GAP;
+            contentY += ROW_HEIGHT + ROW_GAP;
 
-            // Target value
             EditBox valueBox = new EditBox(
                     Minecraft.getInstance().font,
-                    cx,
-                    cy,
-                    usableWidth,
+                    left,
+                    contentY,
+                    valueWidth,
                     ROW_HEIGHT,
                     Component.literal("Value")
             );
             valueBox.setValue(cond.getTargetValue());
             valueBox.setResponder(cond::setTargetValue);
-            valueBox.setTooltip(Tooltip.create(
-                    Component.literal("Value to compare against\n(numbers, text or regex)")
-            ));
+            valueBox.setTooltip(Tooltip.create(Component.literal("Value used by this condition")));
             widgets.add(valueBox);
 
-            cy += ROW_HEIGHT + ROW_GAP;
+            contentY += ROW_HEIGHT + ROW_GAP;
         }
 
-        // Add condition
-        Button addCond = Button.builder(
-                Component.literal("+ Add Condition"),
-                b -> {
-                    MacroTarget t = MacroTarget.HEALTH;
+        Button addCond = Button.builder(Component.literal("Add Condition"), b -> {
+                    MacroTarget target = MacroTarget.HEALTH;
                     macro.addCondition(
-                            new FormalizedConditon(t, "0", t.getConditions()[0], false),
+                            new FormalizedConditon(target, "0", target.getConditions()[0], false),
                             LogicOperator.AND
                     );
                     onChange.run();
-                }
-        ).bounds(cx, cy, 160, ROW_HEIGHT).build();
-        addCond.setTooltip(Tooltip.create(
-                Component.literal("Add a new condition to this macro")
-        ));
+                })
+                .bounds(left, contentY, 120, ROW_HEIGHT)
+                .build();
         widgets.add(addCond);
 
-        cy += ROW_HEIGHT + 8;
+        contentY += ROW_HEIGHT + SECTION_GAP + LABEL_HEIGHT;
 
-        // ===== ACTIONS HEADER =====
-        widgets.add(disabledHeader("ACTIONS", cx, cy, usableWidth));
-        cy += ROW_HEIGHT + ROW_GAP;
+        int actionTypeWidth = 160;
+        int actionDataWidth = usableWidth - actionTypeWidth - removeWidth - (gap * 2);
 
-        // ===== ACTIONS =====
         for (int i = 0; i < macro.getActions().size(); i++) {
             int index = i;
             FormalizedAction action = macro.getActions().get(i);
 
-            CycleButton<MacroAction> actionBtn =
-                    CycleButton.builder(v -> Component.literal(v.toString()),
-                                    action.getAction())
-                            .withValues(MacroAction.values())
-                            .create(cx, cy, 160, ROW_HEIGHT,
-                                    Component.literal("Action"),
-                                    (btn, val) -> {
-                                        macro.getActions().set(
-                                                index,
-                                                new FormalizedAction(val, action.getActionData())
-                                        );
-                                        onChange.run();
-                                    });
-            actionBtn.setTooltip(Tooltip.create(
-                    Component.literal("Action to execute when conditions are met")
-            ));
+            CycleButton<MacroAction> actionBtn = CycleButton
+                    .builder(value -> Component.literal(value.toString()), action.getAction())
+                    .withValues(MacroAction.values())
+                    .create(left, contentY, actionTypeWidth, ROW_HEIGHT, Component.literal("Action"), (btn, value) -> {
+                        macro.getActions().set(index, new FormalizedAction(value, action.getActionData()));
+                        onChange.run();
+                    });
             widgets.add(actionBtn);
 
             EditBox dataBox = new EditBox(
                     Minecraft.getInstance().font,
-                    cx + 168,
-                    cy,
-                    usableWidth - 168 - trashWidth - gap,
+                    left + actionTypeWidth + gap,
+                    contentY,
+                    actionDataWidth,
                     ROW_HEIGHT,
                     Component.literal("Data")
             );
             dataBox.setValue(action.getActionData());
-            dataBox.setResponder(v ->
-                    macro.getActions().set(
-                            index,
-                            new FormalizedAction(action.getAction(), v)
-                    )
+            dataBox.setResponder(value ->
+                    macro.getActions().set(index, new FormalizedAction(action.getAction(), value))
             );
-            dataBox.setTooltip(Tooltip.create(
-                    Component.literal("Action parameters\n(e.g. chat message or command)")
-            ));
+            dataBox.setTooltip(Tooltip.create(Component.literal("Parameters for the selected action")));
             widgets.add(dataBox);
 
-            Button removeAction = Button.builder(
-                    Component.literal("🗑"),
-                    b -> {
+            Button removeAction = Button.builder(Component.literal("X"), b -> {
                         macro.removeAction(index);
                         onChange.run();
-                    }
-            ).bounds(cx + usableWidth - trashWidth, cy, trashWidth, ROW_HEIGHT).build();
-            removeAction.setTooltip(Tooltip.create(
-                    Component.literal("Remove this action")
-            ));
+                    })
+                    .bounds(left + usableWidth - removeWidth, contentY, removeWidth, ROW_HEIGHT)
+                    .build();
+            removeAction.setTooltip(Tooltip.create(Component.literal("Remove action")));
             widgets.add(removeAction);
 
-            cy += ROW_HEIGHT + ROW_GAP;
+            contentY += ROW_HEIGHT + ROW_GAP;
         }
 
-        // Add action
-        Button addAction = Button.builder(
-                Component.literal("+ Add Action"),
-                b -> {
-                    macro.addAction(
-                            new FormalizedAction(MacroAction.SEND_TO_CHAT, "")
-                    );
+        Button addAction = Button.builder(Component.literal("Add Action"), b -> {
+                    macro.addAction(new FormalizedAction(MacroAction.SEND_TO_CHAT, ""));
                     onChange.run();
-                }
-        ).bounds(cx, cy, 160, ROW_HEIGHT).build();
-        addAction.setTooltip(Tooltip.create(
-                Component.literal("Add a new action to this macro")
-        ));
+                })
+                .bounds(left, contentY, 120, ROW_HEIGHT)
+                .build();
         widgets.add(addAction);
 
         return widgets;
     }
 
-    // ===== helpers =====
+    public void renderDecorations(GuiGraphics guiGraphics, int x, int y, int mouseX, int mouseY) {
+        int panelBottom = y + getHeight();
+        guiGraphics.fill(x, y, x + width, panelBottom, 0x66171717);
+        guiGraphics.fill(x, y, x + width, y + 1, 0xFF474747);
+        guiGraphics.fill(x, panelBottom - 1, x + width, panelBottom, 0xFF2A2A2A);
+        guiGraphics.fill(x, y, x + 1, panelBottom, 0xFF2E2E2E);
+        guiGraphics.fill(x + width - 1, y, x + width, panelBottom, 0xFF2E2E2E);
 
-    private Button disabledHeader(String text, int x, int y, int width) {
-        Button b = Button.builder(Component.literal(text), btn -> {})
-                .bounds(x, y, width, ROW_HEIGHT)
-                .build();
-        b.active = false;
-        return b;
+        int textX = x + PADDING;
+        int textY = y + PADDING + ROW_HEIGHT + 3;
+        int actionLabelY = textY + LABEL_HEIGHT + (Math.max(1, macro.getConditions().size()) * ((ROW_HEIGHT * 2) + ROW_GAP)) + ROW_HEIGHT + SECTION_GAP;
+
+        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("Conditions"), textX, textY, 0xA0A0A0, false);
+        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("Actions"), textX, actionLabelY, 0xA0A0A0, false);
     }
 
     private Button disabledSpacer(int x, int y, int width) {
-        Button b = Button.builder(Component.literal(""), btn -> {})
+        Button button = Button.builder(Component.empty(), btn -> {})
                 .bounds(x, y, width, ROW_HEIGHT)
                 .build();
-        b.active = false;
-        return b;
+        button.active = false;
+        button.visible = false;
+        return button;
     }
 }

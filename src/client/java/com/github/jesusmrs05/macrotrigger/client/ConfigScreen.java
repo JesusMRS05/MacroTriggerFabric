@@ -4,6 +4,7 @@ import com.github.jesusmrs05.macrotrigger.config.Config;
 import com.github.jesusmrs05.macrotrigger.config.ConfigManager;
 import com.github.jesusmrs05.macrotrigger.util.Macro;
 import com.github.jesusmrs05.macrotrigger.util.MacroFactory;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -13,20 +14,21 @@ import java.util.List;
 
 public class ConfigScreen extends Screen {
 
-    private static final int FOOTER_HEIGHT = 60;
-    private static final int TOP_MARGIN = 10;
-
-    // 🔥 NUEVO: espacio vertical entre macros
-    private static final int MACRO_SPACING = 50;
+    private static final int OUTER_MARGIN = 16;
+    private static final int HEADER_HEIGHT = 44;
+    private static final int FOOTER_HEIGHT = 32;
+    private static final int PANEL_SPACING = 10;
 
     private final Screen parent;
     private final Config config;
+
+    private final List<MacroEntryPanel> visiblePanels = new ArrayList<>();
 
     private int scrollOffset = 0;
     private int contentHeight = 0;
 
     public ConfigScreen(Screen parent) {
-        super(Component.literal("MacroTrigger Options"));
+        super(Component.literal("MacroTrigger"));
         this.parent = parent;
         this.config = ConfigManager.get();
     }
@@ -38,63 +40,54 @@ public class ConfigScreen extends Screen {
 
     protected void rebuildWidgets() {
         this.clearWidgets();
+        this.visiblePanels.clear();
 
-        int x = 20;
-        int width = this.width - 40;
+        int contentX = OUTER_MARGIN;
+        int contentWidth = this.width - OUTER_MARGIN * 2;
 
-        int visibleTop = TOP_MARGIN;
-        int visibleBottom = this.height - FOOTER_HEIGHT;
+        int visibleTop = HEADER_HEIGHT + OUTER_MARGIN;
+        int visibleBottom = this.height - FOOTER_HEIGHT - OUTER_MARGIN;
 
-        // ---- Build macro panels ----
-        List<MacroEntryPanel> panels = new ArrayList<>();
+        int currentY = visibleTop;
         contentHeight = 0;
 
         for (Macro macro : config.macros) {
             MacroEntryPanel panel = new MacroEntryPanel(
                     macro,
-                    x,
-                    visibleTop + contentHeight,
-                    width,
-                    () -> { // onRemoveMacro
+                    contentX,
+                    currentY + contentHeight,
+                    contentWidth,
+                    () -> {
                         config.macros.remove(macro);
-                        scrollOffset = Math.max(0, scrollOffset - 20);
+                        scrollOffset = Math.max(0, scrollOffset - 24);
                         rebuildWidgets();
                     },
                     this::rebuildWidgets
             );
-            panels.add(panel);
 
-            // 🔥 altura del panel + separación visual
-            contentHeight += panel.getHeight() + MACRO_SPACING;
-        }
-
-        // ---- Add only visible widgets (clipped scroll area) ----
-        for (MacroEntryPanel panel : panels) {
             int panelTop = panel.getBaseY() - scrollOffset;
             int panelBottom = panelTop + panel.getHeight();
-
             if (panelBottom >= visibleTop && panelTop <= visibleBottom) {
+                visiblePanels.add(panel);
                 for (var widget : panel.buildWidgetsAt(panel.getBaseX(), panelTop)) {
                     this.addRenderableWidget(widget);
                 }
             }
+
+            contentHeight += panel.getHeight() + PANEL_SPACING;
         }
 
-        // ---- FOOTER (fixed) ----
-        int footerY = this.height - FOOTER_HEIGHT + 20;
-
+        int addButtonWidth = 110;
         this.addRenderableWidget(
                 Button.builder(
-                        Component.literal("+ Add Macro"),
+                        Component.literal("Add Macro"),
                         btn -> {
                             config.macros.add(MacroFactory.defaultMacro());
-                            scrollOffset = Math.max(
-                                    0,
-                                    contentHeight - (visibleBottom - visibleTop)
-                            );
+                            int visibleHeight = Math.max(0, visibleBottom - visibleTop);
+                            scrollOffset = Math.max(0, contentHeight - visibleHeight + PANEL_SPACING);
                             rebuildWidgets();
                         }
-                ).bounds(20, footerY, 140, 20).build()
+                ).bounds(this.width - OUTER_MARGIN - addButtonWidth, OUTER_MARGIN + 10, addButtonWidth, 20).build()
         );
 
         this.addRenderableWidget(
@@ -104,18 +97,59 @@ public class ConfigScreen extends Screen {
                             ConfigManager.save();
                             this.minecraft.setScreen(parent);
                         }
-                ).bounds(this.width - 120 - 20, footerY, 120, 20).build()
+                ).bounds(this.width - OUTER_MARGIN - 90, this.height - OUTER_MARGIN - 20, 90, 20).build()
         );
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY,
-                                 double horizontalAmount, double verticalAmount) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        guiGraphics.fill(0, 0, this.width, this.height, 0xCC101010);
 
-        int visibleHeight = this.height - FOOTER_HEIGHT - TOP_MARGIN;
+        int contentLeft = OUTER_MARGIN;
+        int contentRight = this.width - OUTER_MARGIN;
+        int visibleTop = HEADER_HEIGHT + OUTER_MARGIN;
+        int visibleBottom = this.height - FOOTER_HEIGHT - OUTER_MARGIN;
+
+        guiGraphics.fill(contentLeft, visibleTop - 4, contentRight, visibleBottom + 4, 0x66101010);
+        guiGraphics.hLine(contentLeft, contentRight - 1, visibleTop - 4, 0xFF3A3A3A);
+        guiGraphics.hLine(contentLeft, contentRight - 1, visibleBottom + 4, 0xFF3A3A3A);
+
+        guiGraphics.drawString(this.font, this.title, OUTER_MARGIN, OUTER_MARGIN + 6, 0xFFFFFF, false);
+        guiGraphics.drawString(
+                this.font,
+                Component.literal(config.macros.size() + " macros configured"),
+                OUTER_MARGIN,
+                OUTER_MARGIN + 22,
+                0xA0A0A0,
+                false
+        );
+
+        if (config.macros.isEmpty()) {
+            int centerX = this.width / 2;
+            int centerY = (visibleTop + visibleBottom) / 2;
+            guiGraphics.drawCenteredString(this.font, Component.literal("No macros yet"), centerX, centerY - 10, 0xFFFFFF);
+            guiGraphics.drawCenteredString(
+                    this.font,
+                    Component.literal("Use Add Macro to create your first rule"),
+                    centerX,
+                    centerY + 4,
+                    0xA0A0A0
+            );
+        }
+
+        for (MacroEntryPanel panel : visiblePanels) {
+            panel.renderDecorations(guiGraphics, panel.getBaseX(), panel.getBaseY() - scrollOffset, mouseX, mouseY);
+        }
+
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        int visibleHeight = this.height - HEADER_HEIGHT - FOOTER_HEIGHT - (OUTER_MARGIN * 2);
         int maxOffset = Math.max(0, contentHeight - visibleHeight);
 
-        int delta = (int) (-verticalAmount * 24);
+        int delta = (int) (-verticalAmount * 18);
         scrollOffset = Math.max(0, Math.min(maxOffset, scrollOffset + delta));
 
         rebuildWidgets();
