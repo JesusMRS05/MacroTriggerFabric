@@ -5,6 +5,7 @@ import com.github.jesusmrs05.macrotrigger.config.ConfigManager;
 import com.github.jesusmrs05.macrotrigger.util.Macro;
 import com.github.jesusmrs05.macrotrigger.util.MacroFactory;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -15,14 +16,17 @@ import java.util.List;
 public class ConfigScreen extends Screen {
 
     private static final int OUTER_MARGIN = 16;
-    private static final int HEADER_HEIGHT = 44;
-    private static final int FOOTER_HEIGHT = 32;
+    private static final int HEADER_HEIGHT = 36;
+    private static final int FOOTER_HEIGHT = 36;
     private static final int PANEL_SPACING = 10;
+    private static final int BAR_INSET = 6;
+    private static final int BODY_INSET = 4;
 
     private final Screen parent;
     private final Config config;
 
     private final List<MacroEntryPanel> visiblePanels = new ArrayList<>();
+    private final List<AbstractWidget> bodyWidgets = new ArrayList<>();
 
     private int scrollOffset = 0;
     private int contentHeight = 0;
@@ -41,12 +45,17 @@ public class ConfigScreen extends Screen {
     protected void rebuildWidgets() {
         this.clearWidgets();
         this.visiblePanels.clear();
+        this.bodyWidgets.clear();
 
         int contentX = OUTER_MARGIN;
         int contentWidth = this.width - OUTER_MARGIN * 2;
 
-        int visibleTop = HEADER_HEIGHT + OUTER_MARGIN;
-        int visibleBottom = this.height - FOOTER_HEIGHT - OUTER_MARGIN;
+        int headerTop = OUTER_MARGIN;
+        int headerBottom = headerTop + HEADER_HEIGHT;
+        int footerBottom = this.height - OUTER_MARGIN;
+        int footerTop = footerBottom - FOOTER_HEIGHT;
+        int visibleTop = headerBottom + BODY_INSET;
+        int visibleBottom = footerTop - BODY_INSET;
 
         int currentY = visibleTop;
         contentHeight = 0;
@@ -70,7 +79,7 @@ public class ConfigScreen extends Screen {
             if (panelBottom >= visibleTop && panelTop <= visibleBottom) {
                 visiblePanels.add(panel);
                 for (var widget : panel.buildWidgetsAt(panel.getBaseX(), panelTop)) {
-                    this.addRenderableWidget(widget);
+                    this.bodyWidgets.add(this.addWidget(widget));
                 }
             }
 
@@ -87,7 +96,7 @@ public class ConfigScreen extends Screen {
                             scrollOffset = Math.max(0, contentHeight - visibleHeight + PANEL_SPACING);
                             rebuildWidgets();
                         }
-                ).bounds(this.width - OUTER_MARGIN - addButtonWidth, OUTER_MARGIN + 10, addButtonWidth, 20).build()
+                ).bounds(this.width - OUTER_MARGIN - BAR_INSET - addButtonWidth, headerTop + (HEADER_HEIGHT - 20) / 2, addButtonWidth, 20).build()
         );
 
         this.addRenderableWidget(
@@ -97,7 +106,7 @@ public class ConfigScreen extends Screen {
                             ConfigManager.save();
                             this.minecraft.setScreen(parent);
                         }
-                ).bounds(this.width - OUTER_MARGIN - 90, this.height - OUTER_MARGIN - 20, 90, 20).build()
+                ).bounds(this.width - OUTER_MARGIN - BAR_INSET - 90, footerTop + (FOOTER_HEIGHT - 20) / 2, 90, 20).build()
         );
     }
 
@@ -107,19 +116,32 @@ public class ConfigScreen extends Screen {
 
         int contentLeft = OUTER_MARGIN;
         int contentRight = this.width - OUTER_MARGIN;
-        int visibleTop = HEADER_HEIGHT + OUTER_MARGIN;
-        int visibleBottom = this.height - FOOTER_HEIGHT - OUTER_MARGIN;
+        int headerTop = OUTER_MARGIN;
+        int headerBottom = headerTop + HEADER_HEIGHT;
+        int footerBottom = this.height - OUTER_MARGIN;
+        int footerTop = footerBottom - FOOTER_HEIGHT;
+        int bodyTop = headerBottom;
+        int bodyBottom = footerTop;
+        int visibleTop = bodyTop + BODY_INSET;
+        int visibleBottom = bodyBottom - BODY_INSET;
 
-        guiGraphics.fill(contentLeft, visibleTop - 4, contentRight, visibleBottom + 4, 0x66101010);
-        guiGraphics.hLine(contentLeft, contentRight - 1, visibleTop - 4, 0xFF3A3A3A);
-        guiGraphics.hLine(contentLeft, contentRight - 1, visibleBottom + 4, 0xFF3A3A3A);
+        this.renderMenuBackground(guiGraphics, contentLeft, headerTop, contentRight, headerBottom);
+        this.renderMenuBackground(guiGraphics, contentLeft, footerTop, contentRight, footerBottom);
+        guiGraphics.fill(contentLeft, bodyTop, contentRight, bodyBottom, 0x66101010);
 
-        guiGraphics.drawString(this.font, this.title, OUTER_MARGIN, OUTER_MARGIN + 6, 0xFFFFFF, false);
+        guiGraphics.hLine(contentLeft, contentRight - 1, headerTop, 0xFF474747);
+        guiGraphics.hLine(contentLeft, contentRight - 1, headerBottom, 0xFF3A3A3A);
+        guiGraphics.hLine(contentLeft, contentRight - 1, footerTop, 0xFF3A3A3A);
+        guiGraphics.hLine(contentLeft, contentRight - 1, footerBottom, 0xFF2E2E2E);
+        guiGraphics.vLine(contentLeft, headerTop, footerBottom, 0xFF2E2E2E);
+        guiGraphics.vLine(contentRight - 1, headerTop, footerBottom, 0xFF2E2E2E);
+
+        guiGraphics.drawString(this.font, this.title, contentLeft + BAR_INSET, headerTop + 7, 0xFFFFFF, false);
         guiGraphics.drawString(
                 this.font,
                 Component.literal(config.macros.size() + " macros configured"),
-                OUTER_MARGIN,
-                OUTER_MARGIN + 22,
+                contentLeft + BAR_INSET + 96,
+                headerTop + 7,
                 0xA0A0A0,
                 false
         );
@@ -137,16 +159,21 @@ public class ConfigScreen extends Screen {
             );
         }
 
+        guiGraphics.enableScissor(contentLeft + 1, visibleTop, contentRight - 1, visibleBottom);
         for (MacroEntryPanel panel : visiblePanels) {
             panel.renderDecorations(guiGraphics, panel.getBaseX(), panel.getBaseY() - scrollOffset, mouseX, mouseY);
         }
+        for (AbstractWidget widget : bodyWidgets) {
+            widget.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+        guiGraphics.disableScissor();
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int visibleHeight = this.height - HEADER_HEIGHT - FOOTER_HEIGHT - (OUTER_MARGIN * 2);
+        int visibleHeight = this.height - HEADER_HEIGHT - FOOTER_HEIGHT - (OUTER_MARGIN * 2) - (BODY_INSET * 2);
         int maxOffset = Math.max(0, contentHeight - visibleHeight);
 
         int delta = (int) (-verticalAmount * 18);
