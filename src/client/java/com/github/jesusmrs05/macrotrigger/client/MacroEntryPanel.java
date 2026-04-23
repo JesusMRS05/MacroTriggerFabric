@@ -10,13 +10,12 @@ import com.github.jesusmrs05.macrotrigger.util.MacroTarget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MacroEntryPanel {
@@ -103,9 +102,15 @@ public class MacroEntryPanel {
         nameBox.setTooltip(Tooltip.create(Component.literal("Name shown in the macro list")));
         widgets.add(nameBox);
 
-        Button deleteMacro = Button.builder(Component.literal("Delete"), b -> onRemoveMacro.run())
-                .bounds(left + nameWidth + gap, contentY, deleteMacroWidth, ROW_HEIGHT)
-                .build();
+        MacroPanelButton deleteMacro = new MacroPanelButton(
+                left + nameWidth + gap,
+                contentY,
+                deleteMacroWidth,
+                ROW_HEIGHT,
+                Component.literal("Delete"),
+                MacroPanelButton.Style.DANGER,
+                b -> onRemoveMacro.run()
+        );
         deleteMacro.setTooltip(Tooltip.create(Component.literal("Remove this macro")));
         widgets.add(deleteMacro);
 
@@ -123,50 +128,81 @@ public class MacroEntryPanel {
             FormalizedConditon cond = macro.getConditions().get(i);
 
             if (i > 0) {
-                CycleButton<LogicOperator> opBtn = CycleButton
-                        .builder(value -> Component.literal(value.toString()), macro.getOperators().get(i))
-                        .withValues(LogicOperator.values())
-                        .create(colOp, contentY, compactWidth, ROW_HEIGHT, Component.literal("Join"), (btn, value) -> {
+                MacroPanelCycleButton<LogicOperator> opBtn = new MacroPanelCycleButton<>(
+                        colOp,
+                        contentY,
+                        compactWidth,
+                        ROW_HEIGHT,
+                        Arrays.asList(LogicOperator.values()),
+                        macro.getOperators().get(i),
+                        value -> Component.literal(value.toString()),
+                        value -> {
                             macro.getOperators().set(index, value);
                             onChange.run();
-                        });
+                        }
+                );
                 widgets.add(opBtn);
             } else {
                 widgets.add(disabledSpacer(colOp, contentY, compactWidth));
             }
 
-            CycleButton<MacroTarget> targetBtn = CycleButton
-                    .builder(value -> Component.literal(value.toString()), cond.getMacroTarget())
-                    .withValues(MacroTarget.values())
-                    .create(colTarget, contentY, targetWidth, ROW_HEIGHT, Component.literal("Target"), (btn, value) -> {
+            MacroPanelCycleButton<MacroTarget> targetBtn = new MacroPanelCycleButton<>(
+                    colTarget,
+                    contentY,
+                    targetWidth,
+                    ROW_HEIGHT,
+                    Arrays.asList(MacroTarget.values()),
+                    cond.getMacroTarget(),
+                    value -> Component.literal(value.toString()),
+                    value -> {
                         cond.setMacroTarget(value);
                         onChange.run();
-                    });
+                    }
+            );
             widgets.add(targetBtn);
 
-            CycleButton<MacroCondition> condBtn = CycleButton
-                    .builder(value -> Component.literal(value.toString()), cond.getCondition())
-                    .withValues(cond.getMacroTarget().getConditions())
-                    .create(colCondition, contentY, conditionWidth, ROW_HEIGHT, Component.literal("Check"), (btn, value) -> {
+            MacroPanelCycleButton<MacroCondition> condBtn = new MacroPanelCycleButton<>(
+                    colCondition,
+                    contentY,
+                    conditionWidth,
+                    ROW_HEIGHT,
+                    Arrays.asList(cond.getMacroTarget().getConditions()),
+                    cond.getCondition(),
+                    value -> Component.literal(value.toString()),
+                    value -> {
                         cond.setCondition(value);
                         onChange.run();
-                    });
+                    }
+            );
             widgets.add(condBtn);
 
-            CycleButton<Boolean> notBtn = CycleButton
-                    .booleanBuilder(Component.literal("Not"), Component.literal("Match"), cond.isNegate())
-                    .create(colNot, contentY, 72, ROW_HEIGHT, Component.literal("Mode"), (btn, value) -> {
+            MacroPanelCycleButton<Boolean> notBtn = new MacroPanelCycleButton<>(
+                    colNot,
+                    contentY,
+                    72,
+                    ROW_HEIGHT,
+                    List.of(Boolean.FALSE, Boolean.TRUE),
+                    cond.isNegate(),
+                    value -> value ? Component.literal("Not") : Component.literal("Match"),
+                    value -> {
                         cond.setNegate(value);
                         onChange.run();
-                    });
+                    }
+            );
             widgets.add(notBtn);
 
-            Button removeCond = Button.builder(Component.literal("X"), b -> {
+            MacroPanelButton removeCond = new MacroPanelButton(
+                    colRemove,
+                    contentY,
+                    removeWidth,
+                    ROW_HEIGHT,
+                    Component.literal("X"),
+                    MacroPanelButton.Style.DANGER,
+                    b -> {
                         macro.removeCondition(index);
                         onChange.run();
-                    })
-                    .bounds(colRemove, contentY, removeWidth, ROW_HEIGHT)
-                    .build();
+                    }
+            );
             removeCond.setTooltip(Tooltip.create(Component.literal("Remove condition")));
             widgets.add(removeCond);
 
@@ -188,16 +224,22 @@ public class MacroEntryPanel {
             contentY += ROW_HEIGHT + ROW_GAP;
         }
 
-        Button addCond = Button.builder(Component.literal("Add Condition"), b -> {
+        MacroPanelButton addCond = new MacroPanelButton(
+                left,
+                contentY,
+                120,
+                ROW_HEIGHT,
+                Component.literal("Add Condition"),
+                MacroPanelButton.Style.DEFAULT,
+                b -> {
                     MacroTarget target = MacroTarget.HEALTH;
                     macro.addCondition(
                             new FormalizedConditon(target, "0", target.getConditions()[0], false),
                             LogicOperator.AND
                     );
                     onChange.run();
-                })
-                .bounds(left, contentY, 120, ROW_HEIGHT)
-                .build();
+                }
+        );
         widgets.add(addCond);
 
         contentY += ROW_HEIGHT + SECTION_GAP + LABEL_HEIGHT;
@@ -209,13 +251,19 @@ public class MacroEntryPanel {
             int index = i;
             FormalizedAction action = macro.getActions().get(i);
 
-            CycleButton<MacroAction> actionBtn = CycleButton
-                    .builder(value -> Component.literal(value.toString()), action.getAction())
-                    .withValues(MacroAction.values())
-                    .create(left, contentY, actionTypeWidth, ROW_HEIGHT, Component.literal("Action"), (btn, value) -> {
+            MacroPanelCycleButton<MacroAction> actionBtn = new MacroPanelCycleButton<>(
+                    left,
+                    contentY,
+                    actionTypeWidth,
+                    ROW_HEIGHT,
+                    Arrays.asList(MacroAction.values()),
+                    action.getAction(),
+                    value -> Component.literal(value.toString()),
+                    value -> {
                         macro.getActions().set(index, new FormalizedAction(value, action.getActionData()));
                         onChange.run();
-                    });
+                    }
+            );
             widgets.add(actionBtn);
 
             EditBox dataBox = new EditBox(
@@ -233,24 +281,36 @@ public class MacroEntryPanel {
             dataBox.setTooltip(Tooltip.create(Component.literal("Parameters for the selected action")));
             widgets.add(dataBox);
 
-            Button removeAction = Button.builder(Component.literal("X"), b -> {
+            MacroPanelButton removeAction = new MacroPanelButton(
+                    left + usableWidth - removeWidth,
+                    contentY,
+                    removeWidth,
+                    ROW_HEIGHT,
+                    Component.literal("X"),
+                    MacroPanelButton.Style.DANGER,
+                    b -> {
                         macro.removeAction(index);
                         onChange.run();
-                    })
-                    .bounds(left + usableWidth - removeWidth, contentY, removeWidth, ROW_HEIGHT)
-                    .build();
+                    }
+            );
             removeAction.setTooltip(Tooltip.create(Component.literal("Remove action")));
             widgets.add(removeAction);
 
             contentY += ROW_HEIGHT + ROW_GAP;
         }
 
-        Button addAction = Button.builder(Component.literal("Add Action"), b -> {
+        MacroPanelButton addAction = new MacroPanelButton(
+                left,
+                contentY,
+                120,
+                ROW_HEIGHT,
+                Component.literal("Add Action"),
+                MacroPanelButton.Style.DEFAULT,
+                b -> {
                     macro.addAction(new FormalizedAction(MacroAction.SEND_TO_CHAT, ""));
                     onChange.run();
-                })
-                .bounds(left, contentY, 120, ROW_HEIGHT)
-                .build();
+                }
+        );
         widgets.add(addAction);
 
         return widgets;
@@ -274,10 +334,16 @@ public class MacroEntryPanel {
         guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("Actions"), textX, actionLabelY, 0xA0A0A0, false);
     }
 
-    private Button disabledSpacer(int x, int y, int width) {
-        Button button = Button.builder(Component.empty(), btn -> {})
-                .bounds(x, y, width, ROW_HEIGHT)
-                .build();
+    private MacroPanelButton disabledSpacer(int x, int y, int width) {
+        MacroPanelButton button = new MacroPanelButton(
+                x,
+                y,
+                width,
+                ROW_HEIGHT,
+                Component.empty(),
+                MacroPanelButton.Style.SUBTLE,
+                b -> {}
+        );
         button.active = false;
         button.visible = false;
         return button;
