@@ -4,6 +4,7 @@ import com.github.jesusmrs05.macrotrigger.config.Config;
 import com.github.jesusmrs05.macrotrigger.config.ConfigManager;
 import com.github.jesusmrs05.macrotrigger.util.Macro;
 import com.github.jesusmrs05.macrotrigger.util.MacroFactory;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -28,6 +29,9 @@ public class ConfigScreen extends Screen {
     private final List<MacroEntryPanel> visiblePanels = new ArrayList<>();
     private final List<AbstractWidget> bodyWidgets = new ArrayList<>();
 
+    private Button addMacroButton;
+    private Button doneButton;
+
     private int scrollOffset = 0;
     private int contentHeight = 0;
 
@@ -46,6 +50,8 @@ public class ConfigScreen extends Screen {
         this.clearWidgets();
         this.visiblePanels.clear();
         this.bodyWidgets.clear();
+        this.addMacroButton = null;
+        this.doneButton = null;
 
         int contentX = OUTER_MARGIN;
         int contentWidth = this.width - OUTER_MARGIN * 2;
@@ -87,7 +93,7 @@ public class ConfigScreen extends Screen {
         }
 
         int addButtonWidth = 110;
-        this.addRenderableWidget(
+        this.addMacroButton = this.addRenderableWidget(
                 Button.builder(
                         Component.literal("Add Macro"),
                         btn -> {
@@ -99,7 +105,7 @@ public class ConfigScreen extends Screen {
                 ).bounds(this.width - OUTER_MARGIN - BAR_INSET - addButtonWidth, headerTop + (HEADER_HEIGHT - 20) / 2, addButtonWidth, 20).build()
         );
 
-        this.addRenderableWidget(
+        this.doneButton = this.addRenderableWidget(
                 Button.builder(
                         Component.literal("Done"),
                         btn -> {
@@ -181,5 +187,38 @@ public class ConfigScreen extends Screen {
 
         rebuildWidgets();
         return true;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+        if (this.addMacroButton != null && this.addMacroButton.mouseClicked(event, bl)) {
+            this.setFocused(this.addMacroButton);
+            return true;
+        }
+
+        if (this.doneButton != null && this.doneButton.mouseClicked(event, bl)) {
+            this.setFocused(this.doneButton);
+            return true;
+        }
+
+        if (!isPointInsideBody(event.x(), event.y())) {
+            return false;
+        }
+
+        return super.mouseClicked(event, bl);
+    }
+
+    private boolean isPointInsideBody(double mouseX, double mouseY) {
+        int headerBottom = OUTER_MARGIN + HEADER_HEIGHT;
+        int footerTop = this.height - OUTER_MARGIN - FOOTER_HEIGHT;
+        int visibleTop = headerBottom + BODY_INSET;
+        int visibleBottom = footerTop - BODY_INSET;
+        int contentLeft = OUTER_MARGIN;
+        int contentRight = this.width - OUTER_MARGIN;
+
+        return mouseX >= contentLeft
+                && mouseX < contentRight
+                && mouseY >= visibleTop
+                && mouseY < visibleBottom;
     }
 }
