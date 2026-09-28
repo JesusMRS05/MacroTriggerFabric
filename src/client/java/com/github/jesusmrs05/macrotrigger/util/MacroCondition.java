@@ -1,7 +1,6 @@
 package com.github.jesusmrs05.macrotrigger.util;
 
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 public enum MacroCondition {
     LESSER_THAN((value, targetValue) ->
@@ -43,6 +42,10 @@ public enum MacroCondition {
 
     MATCHES_REGEX((value, targetValue) ->
             value.toString().matches(targetValue)
+    ),
+
+    TIMER_ENDED((value, targetValue) ->
+            TimerManager.isFinished(targetValue)
     );
 
     public static final MacroCondition[] NUMERIC_CONDITIONS = new MacroCondition[] {

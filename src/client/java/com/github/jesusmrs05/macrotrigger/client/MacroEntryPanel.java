@@ -26,6 +26,7 @@ public class MacroEntryPanel {
     private static final int SECTION_GAP = 8;
     private static final int LABEL_HEIGHT = 12;
     private static final int BOTTOM_PADDING = 6;
+    private static final int MAX_VALUE_LENGTH = 32767;
 
     private final Macro macro;
     private final int baseX;
@@ -166,6 +167,7 @@ public class MacroEntryPanel {
                     value -> Component.literal(value.toString()),
                     value -> {
                         cond.setMacroTarget(value);
+                        cond.setTargetValue(value.getExampleValue());
                         onChange.run();
                     }
             );
@@ -226,6 +228,7 @@ public class MacroEntryPanel {
                     ROW_HEIGHT,
                     Component.literal("Value")
             );
+            valueBox.setMaxLength(MAX_VALUE_LENGTH);
             valueBox.setValue(cond.getTargetValue());
             valueBox.setResponder(cond::setTargetValue);
             valueBox.setTooltip(Tooltip.create(Component.literal("Value used by this condition")));
@@ -244,7 +247,12 @@ public class MacroEntryPanel {
                 b -> {
                     MacroTarget target = MacroTarget.HEALTH;
                     macro.addCondition(
-                            new FormalizedConditon(target, "0", target.getConditions()[0], false),
+                            new FormalizedConditon(
+                                    target,
+                                    "0",
+                                    target.getConditions()[0],
+                                    false
+                            ),
                             LogicOperator.AND
                     );
                     onChange.run();
@@ -270,7 +278,13 @@ public class MacroEntryPanel {
                     action.getAction(),
                     value -> Component.literal(value.toString()),
                     value -> {
-                        macro.getActions().set(index, new FormalizedAction(value, action.getActionData()));
+                        macro.getActions().set(
+                                index,
+                                new FormalizedAction(
+                                        value,
+                                        value.getExampleData()
+                                )
+                        );
                         onChange.run();
                     }
             );
@@ -284,9 +298,17 @@ public class MacroEntryPanel {
                     ROW_HEIGHT,
                     Component.literal("Data")
             );
+
+            dataBox.setMaxLength(MAX_VALUE_LENGTH);
             dataBox.setValue(action.getActionData());
             dataBox.setResponder(value ->
-                    macro.getActions().set(index, new FormalizedAction(action.getAction(), value))
+                    macro.getActions().set(
+                            index,
+                            new FormalizedAction(
+                                    action.getAction(),
+                                    value
+                            )
+                    )
             );
             dataBox.setTooltip(Tooltip.create(Component.literal("Parameters for the selected action")));
             widgets.add(dataBox);
@@ -317,7 +339,12 @@ public class MacroEntryPanel {
                 Component.literal("Add Action"),
                 MacroPanelButton.Style.DEFAULT,
                 b -> {
-                    macro.addAction(new FormalizedAction(MacroAction.SEND_TO_CHAT, ""));
+                    macro.addAction(
+                            new FormalizedAction(
+                                    MacroAction.SEND_TO_CHAT,
+                                    MacroAction.SEND_TO_CHAT.getExampleData()
+                            )
+                    );
                     onChange.run();
                 }
         );

@@ -9,7 +9,10 @@ public class MacroFactory {
         MacroTarget target = MacroTarget.HEALTH;
 
         List<FormalizedAction> actions = new ArrayList<>();
-        actions.add(new FormalizedAction(MacroAction.SEND_TO_CHAT, ""));
+        actions.add(new FormalizedAction(
+                MacroAction.SEND_TO_CHAT,
+                MacroAction.SEND_TO_CHAT.getExampleData()
+        ));
 
         List<FormalizedConditon> conditions = new ArrayList<>();
         conditions.add(new FormalizedConditon(
