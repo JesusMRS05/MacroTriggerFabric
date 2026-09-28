@@ -1,6 +1,6 @@
 package com.github.jesusmrs05.macrotrigger.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -40,8 +40,12 @@ public class MacroPanelButton extends AbstractWidget {
         this.onPress = onPress;
     }
 
-    @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(
+            GuiGraphicsExtractor graphics,
+            int mouseX,
+            int mouseY,
+            float partialTick
+    ) {
         int left = this.getX();
         int top = this.getY();
         int right = left + this.width;
@@ -61,13 +65,13 @@ public class MacroPanelButton extends AbstractWidget {
             text = 0xFFFFFFFF;
         }
 
-        guiGraphics.fill(left, top, right, bottom, fill);
-        guiGraphics.fill(left, top, right, top + 1, this.style.highlightColor);
-        guiGraphics.fill(left, top, left + 1, bottom, this.style.highlightColor);
-        guiGraphics.fill(left, bottom - 1, right, bottom, border);
-        guiGraphics.fill(right - 1, top, right, bottom, border);
+        graphics.fill(left, top, right, bottom, fill);
+        graphics.fill(left, top, right, top + 1, this.style.highlightColor);
+        graphics.fill(left, top, left + 1, bottom, this.style.highlightColor);
+        graphics.fill(left, bottom - 1, right, bottom, border);
+        graphics.fill(right - 1, top, right, bottom, border);
 
-        guiGraphics.drawCenteredString(
+        graphics.centeredText(
                 net.minecraft.client.Minecraft.getInstance().font,
                 this.getMessage(),
                 left + this.width / 2,

@@ -1,7 +1,7 @@
 package com.github.jesusmrs05.macrotrigger.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -40,38 +40,39 @@ public class MacroPanelCycleButton<T> extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void extractWidgetRenderState(
+            GuiGraphicsExtractor graphics,
+            int mouseX,
+            int mouseY,
+            float partialTick
+    ) {
         int left = this.getX();
         int top = this.getY();
         int right = left + this.width;
         int bottom = top + this.height;
 
-        int fill = 0xFF4C4C4C;
-        int border = 0xFF232323;
-        int highlight = 0xFF777777;
+        int fill = 0xFF5C5C5C;
+        int border = 0xFF2D2D2D;
+        int highlight = 0xFF8D8D8D;
         int text = 0xFFE0E0E0;
 
         if (!this.active) {
-            fill = 0xFF3A3A3A;
-            border = 0xFF1E1E1E;
-            highlight = 0xFF555555;
+            fill = 0xFF3F3F3F;
+            border = 0xFF202020;
             text = 0xFF8A8A8A;
         } else if (this.isHoveredOrFocused()) {
-            fill = 0xFF646464;
-            border = 0xFF2D2D2D;
-            highlight = 0xFF909090;
+            fill = brighten(fill, 18);
+            border = brighten(border, 14);
             text = 0xFFFFFFFF;
         }
 
-        guiGraphics.fill(left, top, right, bottom, fill);
-        guiGraphics.fill(left, top, right, top + 1, highlight);
-        guiGraphics.fill(left, top, left + 1, bottom, highlight);
-        guiGraphics.fill(left, bottom - 1, right, bottom, border);
-        guiGraphics.fill(right - 1, top, right, bottom, border);
+        graphics.fill(left, top, right, bottom, fill);
+        graphics.fill(left, top, right, top + 1, highlight);
+        graphics.fill(left, top, left + 1, bottom, highlight);
+        graphics.fill(left, bottom - 1, right, bottom, border);
+        graphics.fill(right - 1, top, right, bottom, border);
 
-        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("<"), left + 5, top + 6, text, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal(">"), right - 10, top + 6, text, false);
-        guiGraphics.drawCenteredString(
+        graphics.centeredText(
                 Minecraft.getInstance().font,
                 this.getMessage(),
                 left + this.width / 2,
@@ -124,5 +125,14 @@ public class MacroPanelCycleButton<T> extends AbstractWidget {
 
     public void setTooltipText(Component tooltip) {
         this.setTooltip(Tooltip.create(tooltip));
+    }
+
+    private static int brighten(int color, int amount) {
+        int a = (color >>> 24) & 0xFF;
+        int r = Math.min(255, ((color >>> 16) & 0xFF) + amount);
+        int g = Math.min(255, ((color >>> 8) & 0xFF) + amount);
+        int b = Math.min(255, (color & 0xFF) + amount);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }

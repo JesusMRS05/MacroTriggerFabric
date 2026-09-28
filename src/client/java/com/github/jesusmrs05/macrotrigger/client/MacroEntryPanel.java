@@ -8,7 +8,7 @@ import com.github.jesusmrs05.macrotrigger.util.MacroAction;
 import com.github.jesusmrs05.macrotrigger.util.MacroCondition;
 import com.github.jesusmrs05.macrotrigger.util.MacroTarget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
@@ -326,22 +326,93 @@ public class MacroEntryPanel {
         return widgets;
     }
 
-    public void renderDecorations(GuiGraphics guiGraphics, int x, int y, int mouseX, int mouseY) {
+    public void renderDecorations(
+            GuiGraphicsExtractor graphics,
+            int x,
+            int y,
+            int mouseX,
+            int mouseY
+    ) {
         int panelBottom = y + getHeight();
-        guiGraphics.fill(x, y, x + width, panelBottom, 0x66171717);
-        guiGraphics.fill(x, y, x + width, y + 1, 0xFF474747);
-        guiGraphics.fill(x, panelBottom - 1, x + width, panelBottom, 0xFF2A2A2A);
-        guiGraphics.fill(x, y, x + 1, panelBottom, 0xFF6A6A6A);
-        guiGraphics.fill(x + 1, y, x + 2, panelBottom, 0xFF2A2A2A);
-        guiGraphics.fill(x + width - 2, y, x + width - 1, panelBottom, 0xFF2A2A2A);
-        guiGraphics.fill(x + width - 1, y, x + width, panelBottom, 0xFF6A6A6A);
+
+        graphics.fill(
+                x, y,
+                x + width, panelBottom,
+                0x66171717
+        );
+
+        graphics.fill(
+                x, y,
+                x + width, y + 1,
+                0xFF474747
+        );
+
+        graphics.fill(
+                x,
+                panelBottom - 1,
+                x + width,
+                panelBottom,
+                0xFF2A2A2A
+        );
+
+        graphics.fill(
+                x, y,
+                x + 1, panelBottom,
+                0xFF6A6A6A
+        );
+
+        graphics.fill(
+                x + 1, y,
+                x + 2, panelBottom,
+                0xFF2A2A2A
+        );
+
+        graphics.fill(
+                x + width - 2, y,
+                x + width - 1, panelBottom,
+                0xFF2A2A2A
+        );
+
+        graphics.fill(
+                x + width - 1, y,
+                x + width, panelBottom,
+                0xFF6A6A6A
+        );
 
         int textX = x + PADDING;
-        int textY = y + PADDING + ROW_HEIGHT + 3;
-        int actionLabelY = textY + LABEL_HEIGHT + (Math.max(1, macro.getConditions().size()) * ((ROW_HEIGHT * 2) + ROW_GAP)) + ROW_HEIGHT + SECTION_GAP;
 
-        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("Conditions"), textX, textY, 0xA0A0A0, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, Component.literal("Actions"), textX, actionLabelY, 0xA0A0A0, false);
+        int conditionsY =
+                y + PADDING + ROW_HEIGHT + SECTION_GAP + LABEL_HEIGHT;
+
+        int textY = conditionsY - LABEL_HEIGHT;
+
+        int actionsY =
+                conditionsY
+                        + (macro.getConditions().size()
+                        * ((ROW_HEIGHT * 2) + (ROW_GAP * 2)))
+                        + ROW_HEIGHT
+                        + SECTION_GAP
+                        + LABEL_HEIGHT;
+
+        int actionLabelY = actionsY - LABEL_HEIGHT;
+
+        graphics.text(
+                Minecraft.getInstance().font,
+                Component.literal("Conditions"),
+                textX,
+                textY,
+                0xFFA0A0A0,
+                false
+        );
+
+        graphics.text(
+                Minecraft.getInstance().font,
+                Component.literal("Actions"),
+                textX,
+                actionLabelY,
+                0xFFA0A0A0,
+                false
+        );
     }
 
     private MacroPanelButton disabledSpacer(int x, int y, int width) {
